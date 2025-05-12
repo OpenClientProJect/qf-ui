@@ -132,7 +132,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Clock } from '@element-plus/icons-vue'
 import { formatDate } from "@/utils/format"
-import { approveVideoService, getVideoReviewListService, rejectVideoService } from '@/api/admin/admin'
+import { approveVideoService, getVideoReviewListService } from '@/api/admin/admin'
 
 // 视频分类列表
 const categories = ref([
@@ -284,7 +284,7 @@ const approveVideo = async (videoId) => {
       type: 'success'
     })
     
-    await approveVideoService(videoId)
+    await approveVideoService(videoId, true)
     ElMessage.success('视频审核已通过')
     
     // 更新本地视频状态
@@ -322,10 +322,7 @@ const rejectVideo = async () => {
   }
   
   try {
-    await rejectVideoService({
-      id: rejectForm.value.videoId,
-      reason: rejectForm.value.reason
-    })
+    await approveVideoService(rejectForm.value.videoId, false)
     
     ElMessage.success('已拒绝该视频')
     rejectDialogVisible.value = false

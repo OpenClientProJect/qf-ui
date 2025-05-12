@@ -11,30 +11,19 @@ export function getVideoReviewListService() {
 }
 
 /**
- * 审核通过视频
+ * 审核视频
  * @param {number} id - 视频ID
- * @returns {Promise}
+ * @param {boolean} review - 审核结果，true表示通过，false表示拒绝
+ * @param {string} [reason] - 拒绝理由，当review为false时可以提供
  */
-export function approveVideoService(id) {
+export function approveVideoService(id, review, reason) {
   return request({
-    url: `/admin/video/approve/${id}`,
-    method: 'put'
-  })
-}
-
-/**
- * 拒绝视频
- * @param {Object} data - 拒绝数据
- * @param {number} data.id - 视频ID
- * @param {string} data.reason - 拒绝理由
- * @returns {Promise}
- */
-export function rejectVideoService(data) {
-  return request({
-    url: `/admin/video/reject/${data.id}`,
+    url: `/admin/video/auditVideo`,
     method: 'put',
-    data: {
-      reason: data.reason
+    params: {
+      id,
+      review,
+      reason
     }
   })
-} 
+}
