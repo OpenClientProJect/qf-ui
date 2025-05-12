@@ -3,7 +3,6 @@ import Home from '@/views/Home.vue'
 import UserCenter from '@/components/user/UserCenter.vue'
 import SearchResult from '@/views/SearchResult.vue'
 import MessageCenter from '@/views/MessageCenter.vue'
-import Admin from '@/views/Admin.vue'
 import { useTokenStore } from '@/stores/token'
 import useUserInfoStore from '@/stores/userInfo'
 import { ElMessage } from 'element-plus'
@@ -57,12 +56,6 @@ const routes = [
     component: MessageCenter,
     meta: { requiresAuth: true }
   },
-  {
-    path: '/admin',
-    name: 'Admin',
-    component: Admin,
-    meta: { requiresAuth: true }
-  }
 ]
 
 const router = createRouter({

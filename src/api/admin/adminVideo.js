@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 
 /**
- * 获取草稿列表
+ * 获取审核列表
  */
 export const getVideoDraftListService = () => {
     return request({

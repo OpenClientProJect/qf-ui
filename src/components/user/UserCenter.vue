@@ -59,6 +59,7 @@
           <!-- 视频列表相关内容 -->
           <UserVideoContent v-if="currentNav === 'videos'" :videos="videos" @refresh="getUserVideos" />
           <EditProfileContent v-else-if="currentNav === 'edit-profile'" />
+          <VideoReviewContent v-else-if="currentNav === 'review'" />
           <div v-else class="empty-state">
             <el-empty :description="getEmptyText">
               <template #description>
@@ -119,7 +120,7 @@
 <script setup>
 import {ref, computed, watch, defineExpose, onMounted} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
-import {Edit, Setting} from '@element-plus/icons-vue'
+import {Edit, Setting, VideoPlay} from '@element-plus/icons-vue'
 import useUserInfoStore from '@/stores/userInfo'
 import {ElMessage} from "element-plus";
 import {useTokenStore} from "@/stores/token";
@@ -127,6 +128,7 @@ import {getUserVideoService} from "@/api/userVideo";
 import {getFollowListService, getFansListService} from "@/api/follow";
 import EditProfileContent from '@/components/user/EditUserInformation.vue'
 import UserVideoContent from '@/components/user/UserVideoContent.vue'
+import VideoReviewContent from '@/components/user/VideoReviewContent.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -148,7 +150,13 @@ const baseNavItems = [
 
 // 根据用户角色动态计算导航项
 const navItems = computed(() => {
-
+  // 如果用户角色为admin，添加视频审核菜单
+  if (userInfo.value.role === 'admin') {
+    return [
+      ...baseNavItems,
+      {name: 'review', label: '视频审核', icon: 'VideoPlay'}
+    ]
+  }
   return baseNavItems
 })
 
@@ -237,7 +245,8 @@ const getEmptyText = computed(() => {
     favorites: '还没有收藏任何内容',
     likes: '还没有点赞过内容',
     articles: '还没有发布过专栏文章',
-    comments: '还没有发表过评论'
+    comments: '还没有发表过评论',
+    review: '暂无需要审核的视频'
   }
   return texts[currentNav.value]
 })
