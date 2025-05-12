@@ -14,6 +14,11 @@ const routes = [
     component: Home
   },
   {
+    path: "/anime",
+    name: 'Anime',
+    component: () => import('@/views/Anime.vue')
+  },
+  {
     path: '/search',
     name: 'SearchResult',
     component: SearchResult

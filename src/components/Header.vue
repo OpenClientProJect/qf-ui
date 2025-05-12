@@ -28,6 +28,7 @@
         </div>
         <div v-if="!isMobile" class="nav-links">
           <router-link to="/" class="nav-item" active-class="active">首页</router-link>
+          <router-link to="/anime" class="nav-item" active-class="active">番剧</router-link>
         </div>
       </div>
 
