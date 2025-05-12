@@ -2,17 +2,11 @@ import request from '@/utils/request'
 
 /**
  * 获取视频审核列表
- * @param {Object} params - 查询参数
- * @param {number} params.pageNum - 页码
- * @param {number} params.pageSize - 每页条数
- * @param {number} params.status - 视频状态：1=待审核，2=已通过，3=已拒绝
- * @returns {Promise}
  */
-export function getVideoReviewListService(params) {
+export function getVideoReviewListService() {
   return request({
-    url: '/admin/video/list',
+    url: '/admin/video/getVideoList',
     method: 'get',
-    params
   })
 }
 

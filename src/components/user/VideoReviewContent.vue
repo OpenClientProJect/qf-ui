@@ -44,8 +44,8 @@
         </div>
       </div>
       
-      <!-- 分页组件 -->
-      <div class="pagination-container">
+      <!-- 分页组件 - 仅在数据大于pageSize时显示 -->
+      <div class="pagination-container" v-if="pagination.total > pagination.pageSize">
         <el-pagination
           v-model:current-page="pagination.pageNum"
           v-model:page-size="pagination.pageSize"
@@ -128,14 +128,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Clock } from '@element-plus/icons-vue'
 import { formatDate } from "@/utils/format"
-import { approveVideoService, rejectVideoService } from '@/api/admin/admin'
-import {getVideoDraftListService} from "@/api/admin/adminVideo"; // 需要创建相应的API服务
+import { approveVideoService, getVideoReviewListService, rejectVideoService } from '@/api/admin/admin'
 
-// 视频分类列表（与UserVideoContent中保持一致）
+// 视频分类列表
 const categories = ref([
   { id: 1, name: '动画' },
   { id: 2, name: '番剧' },
@@ -151,11 +150,17 @@ const categories = ref([
   { id: 12, name: '动物' },
   { id: 13, name: '鬼畜' },
   { id: 14, name: '时尚' },
-  { id: 15, name: '娱乐' }
+  { id: 15, name: '娱乐' },
+  // 添加缺失的分类
+  { id: 105, name: '舞蹈' },
+  { id: 106, name: '游戏' },
+  { id: 202, name: '科技' },
+  { id: 203, name: '娱乐' }
 ])
 
 // 视频列表数据
-const videos = ref([])
+const allVideos = ref([]) // 存储所有获取到的视频
+const videos = ref([]) // 当前显示的视频列表
 const activeTab = ref('pending')
 const emptyText = computed(() => {
   const texts = {
@@ -186,7 +191,7 @@ const selectedVideo = ref({})
 
 // 状态相关函数
 const getStatusText = (status) => {
-  switch (status) {
+  switch (parseInt(status)) {
     case 1: return '待审核'
     case 2: return '已通过'
     case 3: return '已拒绝'
@@ -195,7 +200,7 @@ const getStatusText = (status) => {
 }
 
 const getStatusClass = (status) => {
-  switch (status) {
+  switch (parseInt(status)) {
     case 1: return 'status-pending'
     case 2: return 'status-approved'
     case 3: return 'status-rejected'
@@ -206,49 +211,69 @@ const getStatusClass = (status) => {
 // 获取分类名称
 const getCategoryName = (categoryId) => {
   if (!categoryId) return ''
-  const category = categories.value.find(c => c.id === categoryId)
-  return category ? category.name : ''
+  const category = categories.value.find(c => c.id === parseInt(categoryId))
+  return category ? category.name : '未知分类'
 }
 
 // 获取视频列表
 const getVideoList = async () => {
   try {
-    // 根据当前选中的标签页确定要获取的视频状态
-    let status = 1 // 默认为待审核
-    if (activeTab.value === 'approved') status = 2
-    if (activeTab.value === 'rejected') status = 3
+    const result = await getVideoReviewListService()
     
-    const result = await getVideoDraftListService({
-      pageNum: pagination.value.pageNum,
-      pageSize: pagination.value.pageSize,
-      status
-    })
-    
-    videos.value = result.data.items
-    pagination.value.total = result.data.total
+    if (Array.isArray(result.data)) {
+      // 保存所有视频
+      allVideos.value = result.data
+      // 根据当前标签页过滤视频
+      filterVideos()
+    } else {
+      console.error('API返回格式不符合预期:', result)
+      ElMessage.error('获取视频列表失败，返回格式不符合预期')
+    }
   } catch (error) {
     console.error('获取视频列表失败:', error)
     ElMessage.error('获取视频列表失败，请稍后重试')
   }
 }
 
+// 根据当前标签页过滤视频
+const filterVideos = () => {
+  let status = 1 // 默认为待审核
+  if (activeTab.value === 'approved') status = 2
+  if (activeTab.value === 'rejected') status = 3
+  
+  // 过滤出当前状态的视频
+  const filteredVideos = allVideos.value.filter(video => parseInt(video.status) === status)
+  
+  // 处理分页
+  const start = (pagination.value.pageNum - 1) * pagination.value.pageSize
+  const end = start + pagination.value.pageSize
+  
+  videos.value = filteredVideos.slice(start, end)
+  pagination.value.total = filteredVideos.length
+}
+
 // 处理标签页切换
 const handleTabClick = () => {
   pagination.value.pageNum = 1 // 重置页码
-  getVideoList()
+  filterVideos()
 }
 
 // 分页处理
 const handlePageChange = (newPage) => {
   pagination.value.pageNum = newPage
-  getVideoList()
+  filterVideos()
 }
 
 const handleSizeChange = (newSize) => {
   pagination.value.pageSize = newSize
   pagination.value.pageNum = 1
-  getVideoList()
+  filterVideos()
 }
+
+// 监听activeTab变化
+watch(activeTab, () => {
+  filterVideos()
+})
 
 // 审核操作
 const approveVideo = async (videoId) => {
@@ -261,7 +286,16 @@ const approveVideo = async (videoId) => {
     
     await approveVideoService(videoId)
     ElMessage.success('视频审核已通过')
-    getVideoList() // 刷新列表
+    
+    // 更新本地视频状态
+    const videoIndex = allVideos.value.findIndex(v => v.id === videoId)
+    if (videoIndex !== -1) {
+      allVideos.value[videoIndex].status = 2
+      filterVideos()
+    } else {
+      // 如果本地数据没找到，重新获取所有数据
+      await getVideoList()
+    }
     
     // 如果预览对话框打开，则关闭
     if (previewDialogVisible.value) {
@@ -295,7 +329,16 @@ const rejectVideo = async () => {
     
     ElMessage.success('已拒绝该视频')
     rejectDialogVisible.value = false
-    getVideoList() // 刷新列表
+    
+    // 更新本地视频状态
+    const videoIndex = allVideos.value.findIndex(v => v.id === rejectForm.value.videoId)
+    if (videoIndex !== -1) {
+      allVideos.value[videoIndex].status = 3
+      filterVideos()
+    } else {
+      // 如果本地数据没找到，重新获取所有数据
+      await getVideoList()
+    }
     
     // 如果预览对话框打开，则关闭
     if (previewDialogVisible.value) {
