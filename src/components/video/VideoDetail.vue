@@ -100,12 +100,6 @@
                       取消关注
                     </div>
                   </div>
-                  <el-button class="message-btn" @click="goToChat">
-                    <el-icon>
-                      <ChatDotRound/>
-                    </el-icon>
-                    私信
-                  </el-button>
                 </div>
               </div>
             </div>
@@ -283,12 +277,6 @@
                 取消关注
               </div>
             </div>
-            <el-button class="message-btn" @click="goToChat">
-              <el-icon>
-                <ChatDotRound/>
-              </el-icon>
-              私信
-            </el-button>
           </div>
         </div>
 
@@ -652,17 +640,6 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 
-// 添加跳转到私信页面的方法
-const goToChat = () => {
-  if (!isLogin.value) {
-    eventBus.emit('showLogin')
-    return
-  }
-  router.push({
-    name: 'Chat',
-    query: {username: videoInfo.value.username}
-  })
-}
 
 // 判断是否是自己的视频
 const isSelfVideo = computed(() => {

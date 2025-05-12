@@ -71,16 +71,13 @@
               </el-image>
             </div>
             <div class="video-info">
-              <h3 class="video-title">{{ item.title }}</h3>
-              <div class="video-meta">
-                <div class="content-preview">{{ item.title }}</div>
-              </div>
+              <h3 class="video-title">标题：{{ item.title }}</h3>
               <div class="uploader-info">
                 <el-avatar
                     :size="24"
                     :src="item.userPic || 'https://i0.hdslb.com/bfs/face/default.jpg'"
                 />
-                <span class="uploader-name">{{ item.username || '用户未设置昵称' }}</span>
+                <span class="uploader-name">{{ item.nickname || '用户未设置昵称' }}</span>
                 <span class="upload-time">
                   <el-icon><Clock /></el-icon>
                   {{ formatDate(item.createTime) }}

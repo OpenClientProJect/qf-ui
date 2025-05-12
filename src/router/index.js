@@ -40,12 +40,6 @@ const routes = [
     component: () => import('@/components/ResetPassword.vue')
   },
   {
-    path: '/chat',
-    name: 'Chat',
-    component: () => import('@/views/UserChat.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
     path: '/user',
     name: 'UserHome',
     component: () => import('@/views/UserHome.vue')
