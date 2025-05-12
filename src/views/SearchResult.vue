@@ -97,10 +97,7 @@
             <div class="user-info">
               <div class="user-name">{{ user.name }}</div>
               <div class="user-signature">{{ user.signature }}</div>
-              <div class="user-stats">
-                <span>粉丝: {{ formatCount(user.fans) }}</span>
-                <span>视频: {{ user.videos }}</span>
-              </div>
+             
             </div>
             <el-button
                 class="follow-btn"
@@ -149,8 +146,6 @@ const searchHistory = ref([])
 const navItems = [
   {name: '视频', type: 'video', count: 0},
   {name: '用户', type: 'user', count: 0},
-  {name: '番剧', type: 'anime', count: 0},
-  {name: '直播', type: 'live', count: 0}
 ]
 
 // 响应式数据
@@ -189,21 +184,38 @@ const fetchSearchResults = async () => {
       pageNum: currentPage.value,
       pageSize: pageSize.value
     })
-    searchResults.value = res.data.items.map(item => ({
-      id: item.id,
-      title: item.title,
-      content: item.content,
-      cover: item.cover,
-      userId: item.userId,
-      nickname: item.nickname,
-      userPic: item.userPic,
-      username: item.username,
-      introduction: item.introduction,
-      videoUrl: item.videoUrl,
-      createTime: item.createTime,
-      updateTime: item.updateTime
-    }))
-    total.value = res.data.total
+
+    // 更新导航项的数量
+    navItems[0].count = res.data.video ? res.data.video.length : 0
+    navItems[1].count = res.data.users ? res.data.users.length : 0
+
+    // 根据当前选择的类型处理不同的结果
+    if (currentType.value === 'video') {
+      searchResults.value = (res.data.video || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        content: item.content,
+        cover: item.cover,
+        userId: item.userId,
+        nickname: item.nickname,
+        userPic: item.userPic,
+        username: item.username,
+        createTime: item.createTime,
+        updateTime: item.updateTime
+      }))
+      total.value = res.data.video ? res.data.video.length : 0
+    } else if (currentType.value === 'user') {
+      searchResults.value = (res.data.users || []).map(user => ({
+        id: user.id,
+        name: user.nickname || user.username,
+        avatar: user.userPic,
+        signature: user.introduction,
+        fans: 0, // 由于原数据中没有粉丝数，暂时设为0
+        videos: 0, // 同样，视频数也设为0
+        isFollowed: false // 默认未关注
+      }))
+      total.value = res.data.users ? res.data.users.length : 0
+    }
   } catch (error) {
     ElMessage.error('获取搜索结果失败')
   } finally {
