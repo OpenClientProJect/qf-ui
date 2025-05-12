@@ -39,7 +39,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['toggle-collapse'])
+const emit = defineEmits(['toggle-collapse', 'play'])
 const router = useRouter()
 const art = ref(null)
 const playerContainer = ref(null)
@@ -235,6 +235,7 @@ const initPlayer = () => {
 
   art.value.on('play', () => {
     console.log('视频开始播放')
+    handlePlay()
   })
 
   art.value.on('pause', () => {
@@ -308,6 +309,12 @@ onUnmounted(() => {
     document.body.style.overflow = ''
   }
 })
+
+// 处理视频播放事件
+const handlePlay = () => {
+  // 触发播放事件，通知父组件记录播放
+  emit('play', props.videoId)
+}
 </script>
 
 <style scoped>

@@ -57,6 +57,13 @@
         >
           <img :src="likeIcon" alt="点赞">点赞
         </div>
+        <div
+          class="tab" 
+          :class="{ active: activeTab === 'history' }"
+          @click="switchTab('history')"
+        >
+          <img :src="Record" alt="播放记录">播放记录
+        </div>
       </div>
       <!-- 视频列表 -->
       <div v-if="activeTab === 'videos'">
@@ -130,6 +137,28 @@
           <el-empty v-else description="暂无点赞视频" />
         </div>
       </div>
+      <!-- 播放记录列表 -->
+      <div v-if="activeTab === 'history'">
+        <div v-loading="loadingHistory">
+          <div class="video-list" v-if="historyList.length > 0">
+            <div v-for="video in historyList" 
+                  :key="video.id" 
+                  class="video-item"
+                  @click="goToVideo(video.id)">
+              <div class="video-cover">
+                <img :src="video.cover" :alt="video.title">
+              </div>
+              <div class="video-info">
+                <div class="video-title">{{ video.title }}</div>
+                <div class="video-stats">
+                  <span>{{ formatDate(video.createTime) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <el-empty v-else description="暂无播放记录" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -143,10 +172,11 @@ import bgImage from '@/assets/background/background.webp' // 导入背景图片
 import videoIcon from '@/assets/iconsvg/video.svg'
 import starIcon from '@/assets/iconsvg/userstar.svg'
 import likeIcon from '@/assets/iconsvg/点赞.svg'
-import dynamicIcon from '@/assets/iconsvg/dynamic.svg'
+import Record from '@/assets/iconsvg/Record.svg'
 import useUserInfoStore from '@/stores/userInfo'
 import { getUserCollectionService } from '@/api/user/uservideo'
 import { getUserLikeService } from '@/api/vidoelike'
+import { getVideoRecordListService } from '@/api/user/videorecord' // 导入获取播放记录的API
 import { ElMessage } from 'element-plus'
 import {formatDate} from "@/utils/format";
 
@@ -164,6 +194,10 @@ const loadingCollections = ref(false) // 加载状态
 // 添加点赞相关的状态
 const likeList = ref([])
 const loadingLikes = ref(false)
+
+// 添加播放记录相关的状态
+const historyList = ref([])
+const loadingHistory = ref(false)
 
 // 获取用户首页信息
 const getUserHomeInfo = async () => {
@@ -280,6 +314,52 @@ const getLikeList = async () => {
   }
 }
 
+// 获取播放记录列表
+const getHistoryList = async () => {
+  loadingHistory.value = true
+  try {
+    let username = null
+    
+    // 判断是否查看的是自己的主页
+    const isOwnProfile = !route.query.username
+    
+    // 如果是查看自己的主页，优先使用store中的用户名
+    if (isOwnProfile && userInfoStore.info && userInfoStore.info.username) {
+      username = userInfoStore.info.username
+      console.log('从store获取当前用户名:', username)
+    } else {
+      // 否则使用路由参数
+      username = route.query.username
+      console.log('使用路由参数中的用户名:', username)
+    }
+    
+    if (!username) {
+      ElMessage.warning('无法获取用户名')
+      historyList.value = []
+      return
+    }
+    
+    const res = await getVideoRecordListService(username)
+    console.log('播放记录API返回数据:', res)
+    
+    if (res && res.code === 200 && res.data) {
+      historyList.value = res.data
+    } else {
+      historyList.value = []
+      // 只在主动切换到播放记录标签时显示提示
+      if (activeTab.value === 'history') {
+        ElMessage.info(res?.message || '暂无播放记录')
+      }
+    }
+  } catch (error) {
+    console.error('获取播放记录失败:', error)
+    ElMessage.error('获取播放记录失败，请稍后重试')
+    historyList.value = []
+  } finally {
+    loadingHistory.value = false
+  }
+}
+
 // 修改切换标签的方法
 const switchTab = (tabName) => {
   activeTab.value = tabName
@@ -292,6 +372,10 @@ const switchTab = (tabName) => {
   } else if (tabName === 'likes') {
     if (likeList.value.length === 0 || (!route.query.username && userInfoStore.info.id)) {
       getLikeList()
+    }
+  } else if (tabName === 'history') {
+    if (historyList.value.length === 0) {
+      getHistoryList()
     }
   }
 }

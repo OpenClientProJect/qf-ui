@@ -11,6 +11,7 @@
             :is-collapsed="isCollapsed || isAutoCollapsed"
             :video-id="videoInfo.id"
             @toggle-collapse="toggleCollapse"
+            @play="handleVideoPlay"
         />
 
         <!-- 视频信息 -->
@@ -343,6 +344,7 @@ import StarIcon from '@/assets/iconsvg/star.svg'
 import concernIcon from '@/assets/iconsvg/关注.svg'
 import Unfollow from '@/assets/iconsvg/我的关注.svg'
 import {userActionService, getVideoLikeService} from "@/api/user/uservideo";
+import {addVideoRecordService} from "@/api/user/videorecord"; // 导入添加播放记录的API
 
 
 // 配置 dayjs
@@ -811,6 +813,26 @@ watch(isLogin, async (newVal) => {
     }
   }
 })
+
+// 添加记录播放的方法
+const recordVideoPlay = async () => {
+  try {
+    // 获取当前视频ID
+    const videoId = route.params.id
+    if (!videoId) return
+    
+    // 调用API记录播放
+    await addVideoRecordService(videoId)
+    console.log('视频播放记录已添加')
+  } catch (error) {
+    console.error('添加播放记录失败:', error)
+  }
+}
+
+// 监听视频播放事件
+const handleVideoPlay = () => {
+  recordVideoPlay()
+}
 
 </script>
 
