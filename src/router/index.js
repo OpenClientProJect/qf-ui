@@ -47,6 +47,15 @@ const routes = [
     path: '/anime-manage-content.vue',
     name: 'AnimeManageContent',
     component: () => import('@/components/anime/AnimeManageContent.vue')
+  },
+  {
+    path: '/anime/player/:id',
+    name: 'AnimePlayer',
+    component: () => import('@/views/AnimePlayer.vue'),
+    meta: {
+      title: '番剧播放',
+      requiresAuth: false
+    }
   }
 ]
 

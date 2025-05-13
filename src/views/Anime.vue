@@ -11,7 +11,7 @@
           :autoplay="false"
           ref="carouselRef"
       >
-        <el-carousel-item v-for="(item, index) in bannerList" :key="index">
+        <el-carousel-item v-for="(item, index) in bannerList" :key="index" @click="goToAnimePlayer(item.id)">
           <div class="banner-content">
             <img :src="item.coverImage" :alt="item.title" class="banner-image">
           </div>
@@ -26,6 +26,7 @@
             class="thumbnail-item"
             :class="{ 'active': currentIndex === index }"
             @mouseenter="handleThumbnailHover(index)"
+            @click="goToAnimePlayer(item.id)"
         >
           <img :src="item.coverImage" :alt="item.title">
           <div class="thumbnail-title">{{ item.title }}</div>
@@ -45,79 +46,23 @@
           <img class="title-icon" src="../assets/imge/huohua.png" alt="hot">
           番剧热播榜
         </div>
-        <div class="more">
-          查看全部 <i class="el-icon-arrow-right"></i>
-        </div>
       </div>
 
       <div class="hot-anime-list">
         <div v-for="(anime, index) in hotAnimeList"
-             :key="index"
+             :key="anime.animeId"
              class="hot-anime-item"
+             @click="goToAnimePlayer(anime.animeId)"
         >
           <div class="anime-cover">
-            <img :src="anime.images.webp.large_image_url" :alt="anime.titles[0].title">
-            <div class="score">{{ anime.score }}</div>
+            <img :src="anime.coverImage" :alt="anime.title">
+            <div class="score">{{ getStatusLabel(anime.status) }}</div>
           </div>
           <div class="anime-info">
             <div class="rank-number">{{ index + 1 }}</div>
             <div class="info-content">
-              <div class="title">{{ anime.titles[0].title }}</div>
-              <div class="desc">{{ anime.synopsis }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 新番时间表 -->
-    <div class="schedule-section">
-      <div class="section-header">
-        <div class="title">
-          <img class="title-icon" src="../assets/imge/naozhong.png" alt="schedule">
-          新番时间表
-        </div>
-        <div class="more">
-          查看全部 <i class="el-icon-arrow-right"></i>
-        </div>
-      </div>
-
-      <div class="schedule-content">
-        <div class="weekday-tabs">
-          <div v-for="(day, index) in weekdays"
-               :key="index"
-               :class="['weekday-tab', { active: currentDay === day.id }]"
-               @click="currentDay = day.id"
-          >
-            {{ day.cn }}
-          </div>
-        </div>
-
-        <div class="schedule-scroll-wrapper" ref="scrollWrapper" @mousedown="startDrag" @mousemove="onDrag"
-             @mouseup="stopDrag" @mouseleave="stopDrag">
-          <div class="anime-schedule-list">
-            <div v-if="scheduleList.length === 0" class="no-data">
-              当天暂无更新
-            </div>
-            <div v-for="(anime, index) in scheduleList"
-                 :key="index"
-                 class="schedule-item"
-            >
-              <div class="time">{{ anime.air_time }}</div>
-              <div class="schedule-cover">
-                <img 
-                  :src="anime.images" 
-                  :alt="anime.title"
-                  @error="e => e.target.src = 'default-image.jpg'"
-                >
-                <div class="score" v-if="anime.score">{{ anime.score }}</div>
-              </div>
-              <div class="schedule-info">
-                <div class="title">{{ anime.title }}</div>
-                <div class="episode">
-                  {{ anime.eps ? `更新至第${anime.eps}话` : '暂无更新' }}
-                </div>
-              </div>
+              <div class="title">{{ anime.title }}</div>
+              <div class="desc">{{ anime.description }}</div>
             </div>
           </div>
         </div>
@@ -128,8 +73,11 @@
 
 <script setup>
 import {ref, onUnmounted, onMounted, computed} from 'vue'
-import {getBangumiService, getHotService} from "@/api/bangumi/bangumi";
+import {getBangumiService, getHotService} from "@/api/bangumi/bangumi"
+import {getAnimeListService, getBannerService} from "@/api/anime/anime"
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const activeTab = ref('recommended')
 const currentIndex = ref(0)
 const carouselRef = ref(null)
@@ -147,11 +95,16 @@ const bannerList = ref([
   {
     coverImage: 'https://img.cycimg.me/r/800/pic/cover/l/9e/fa/509297_Cnz9B.jpg',
     title: '番剧热播榜',
-   id: 2
+    id: 2
   }
 ])
 // 热播榜数据
 const hotAnimeList = ref([])
+// 分页参数
+const pageParams = ref({
+  pageNum: 1,
+  pageSize: 10
+})
 
 // 计算轮播图高度
 const bannerHeight = ref('520px')
@@ -234,23 +187,27 @@ const getBannerList = async () => {
 getBannerList()
 
 
-// 获取热播榜数据
+// 获取番剧列表数据
 const getHotAnimeList = async () => {
-  const res = await getHotService()
-  // 处理返回的数据结构
-  hotAnimeList.value = res.data.data;
+  try {
+    const res = await getAnimeListService(pageParams.value)
+    // 直接使用返回的数据
+    hotAnimeList.value = res.data.items;
+  } catch (error) {
+    console.error('获取番剧列表失败:', error)
+  }
 }
 getHotAnimeList()
 
 // 新番时间表数据
 const weekdays = [
-  { id: 1, en: 'Mon', cn: '周一' },
-  { id: 2, en: 'Tue', cn: '周二' },
-  { id: 3, en: 'Wed', cn: '周三' },
-  { id: 4, en: 'Thu', cn: '周四' },
-  { id: 5, en: 'Fri', cn: '周五' },
-  { id: 6, en: 'Sat', cn: '周六' },
-  { id: 7, en: 'Sun', cn: '周日' }
+  {id: 1, en: 'Mon', cn: '周一'},
+  {id: 2, en: 'Tue', cn: '周二'},
+  {id: 3, en: 'Wed', cn: '周三'},
+  {id: 4, en: 'Thu', cn: '周四'},
+  {id: 5, en: 'Fri', cn: '周五'},
+  {id: 6, en: 'Sat', cn: '周六'},
+  {id: 7, en: 'Sun', cn: '周日'}
 ]
 const currentDay = ref(1) // 默认显示周一
 const allScheduleList = ref([])
@@ -319,10 +276,26 @@ const onDrag = (e) => {
 // 停止拖动
 const stopDrag = () => {
   isDragging.value = false
-
-
 }
 
+// 格式化状态文字
+const getStatusLabel = (status) => {
+  const labels = {
+    'ongoing': '连载中',
+    'completed': '已完结',
+    'upcoming': '即将上映',
+    'hiatus': '暂停'
+  }
+  return labels[status] || '未知'
+}
+
+// 跳转到番剧播放页
+const goToAnimePlayer = (animeId) => {
+  if (!animeId) return
+  router.push({
+    path: `/anime/player/${animeId}`
+  })
+}
 </script>
 
 <style scoped>
@@ -389,11 +362,11 @@ const stopDrag = () => {
   bottom: 0;
   height: 300px; /* 增加渐变高度 */
   background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(245, 247, 250, 0.2) 40%,
-    rgba(245, 247, 250, 0.6) 70%,
-    rgba(245, 247, 250, 0.98) 100%
+      to bottom,
+      transparent 0%,
+      rgba(245, 247, 250, 0.2) 40%,
+      rgba(245, 247, 250, 0.6) 70%,
+      rgba(245, 247, 250, 0.98) 100%
   );
   pointer-events: none;
   z-index: 1;
@@ -568,11 +541,11 @@ const stopDrag = () => {
 @media screen and (max-width: 768px) {
   .thumbnail-item {
     width: 80px;
-    
+
     img {
       height: 45px;
     }
-    
+
     .thumbnail-title {
       font-size: 12px;
       padding: 4px;
@@ -587,10 +560,10 @@ const stopDrag = () => {
   .banner-content::after {
     height: 150px;
     background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      rgba(245, 247, 250, 0.4) 50%,
-      rgba(245, 247, 250, 0.9) 100%
+        to bottom,
+        transparent 0%,
+        rgba(245, 247, 250, 0.4) 50%,
+        rgba(245, 247, 250, 0.9) 100%
     );
   }
 
@@ -610,16 +583,16 @@ const stopDrag = () => {
 
   .section-header {
     margin-bottom: 16px;
-    
+
     .title {
       font-size: 16px;
-      
+
       .title-icon {
         width: 24px;
         height: 24px;
       }
     }
-    
+
     .more {
       font-size: 12px;
     }
@@ -636,27 +609,27 @@ const stopDrag = () => {
     .anime-cover {
       aspect-ratio: 3/4;
     }
-    
+
     .anime-info {
       padding: 8px;
       gap: 8px;
-      
+
       .rank-number {
         font-size: 20px;
         min-width: 24px;
       }
-      
+
       .title {
         font-size: 14px;
         margin-bottom: 2px;
       }
-      
+
       .desc {
         font-size: 12px;
         -webkit-line-clamp: 1;
       }
     }
-    
+
     .score {
       font-size: 18px;
       bottom: 6px;
@@ -670,10 +643,11 @@ const stopDrag = () => {
     overflow-x: auto;
     width: 100%;
     -webkit-overflow-scrolling: touch;
-    
+
     /* 隐藏滚动条但保持功能 */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
+
     &::-webkit-scrollbar {
       display: none; /* Chrome/Safari/Opera */
     }
@@ -686,31 +660,31 @@ const stopDrag = () => {
   .schedule-item {
     width: 140px;
     height: 260px;
-    
+
     .time {
       font-size: 12px;
       padding: 2px 10px;
       top: -8px;
     }
-    
+
     .schedule-cover {
       height: 200px;
     }
-    
+
     .schedule-info {
       padding: 8px;
       height: 50px;
-      
+
       .title {
         font-size: 12px;
       }
-      
+
       .episode {
         font-size: 11px;
         margin-top: 2px;
       }
     }
-    
+
     .score {
       font-size: 18px;
     }
@@ -722,10 +696,11 @@ const stopDrag = () => {
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    
+
     /* 隐藏滚动条 */
     scrollbar-width: none;
     -ms-overflow-style: none;
+
     &::-webkit-scrollbar {
       display: none;
     }
@@ -736,7 +711,7 @@ const stopDrag = () => {
     font-size: 14px;
     min-width: 60px;
     flex-shrink: 0;
-    
+
     &.active::after {
       bottom: -8px;
       width: 20px;
@@ -754,7 +729,7 @@ const stopDrag = () => {
 html, body {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
-  
+
   &::-webkit-scrollbar {
     display: none; /* Chrome/Safari/Opera */
   }
@@ -777,10 +752,10 @@ html, body {
   @media screen and (max-width: 768px) {
     .banner-content::after {
       background: linear-gradient(
-        to bottom,
-        transparent 0%,
-        rgba(18, 18, 18, 0.4) 50%,
-        rgba(18, 18, 18, 0.9) 100%
+          to bottom,
+          transparent 0%,
+          rgba(18, 18, 18, 0.4) 50%,
+          rgba(18, 18, 18, 0.9) 100%
       );
     }
 
@@ -802,7 +777,7 @@ html, body {
 
     .weekday-tab {
       color: #999;
-      
+
       &:hover:not(.active) {
         background: rgba(24, 144, 255, 0.15);
       }
@@ -1236,9 +1211,9 @@ html, body {
   right: 0;
   height: 50%;
   background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(0, 0, 0, 0.4)
+      to bottom,
+      transparent,
+      rgba(0, 0, 0, 0.4)
   );
   pointer-events: none;
 }
