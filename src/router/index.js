@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/views/Home.vue'
 import UserCenter from '@/components/user/UserCenter.vue'
 import SearchResult from '@/views/SearchResult.vue'
-import MessageCenter from '@/views/MessageCenter.vue'
 import { useTokenStore } from '@/stores/token'
 import useUserInfoStore from '@/stores/userInfo'
 import { ElMessage } from 'element-plus'
@@ -45,16 +44,10 @@ const routes = [
     component: () => import('@/views/UserHome.vue')
   },
   {
-    path: '/announcement/:id',
-    name: 'AnnouncementDetail',
-    component: () => import('@/views/AnnouncementDetail.vue')
-  },
-  {
-    path: '/messages',
-    name: 'MessageCenter',
-    component: MessageCenter,
-    meta: { requiresAuth: true }
-  },
+    path: '/anime-manage-content.vue',
+    name: 'AnimeManageContent',
+    component: () => import('@/components/anime/AnimeManageContent.vue')
+  }
 ]
 
 const router = createRouter({

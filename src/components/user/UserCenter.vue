@@ -60,6 +60,7 @@
           <UserVideoContent v-if="currentNav === 'videos'" :videos="videos" @refresh="getUserVideos" />
           <EditProfileContent v-else-if="currentNav === 'edit-profile'" />
           <VideoReviewContent v-else-if="currentNav === 'review'" />
+          <AnimeManageContent v-else-if="currentNav === 'anime'" />
           <div v-else class="empty-state">
             <el-empty :description="getEmptyText">
               <template #description>
@@ -129,6 +130,7 @@ import {getFollowListService, getFansListService} from "@/api/follow";
 import EditProfileContent from '@/components/user/EditUserInformation.vue'
 import UserVideoContent from '@/components/user/UserVideoContent.vue'
 import VideoReviewContent from '@/components/user/VideoReviewContent.vue'
+import AnimeManageContent from '@/components/anime/AnimeManageContent.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -154,7 +156,8 @@ const navItems = computed(() => {
   if (userInfo.value.role === 'admin') {
     return [
       ...baseNavItems,
-      {name: 'review', label: '视频审核', icon: 'VideoPlay'}
+      {name: 'review', label: '视频审核', icon: 'VideoPlay'},
+      {name: 'anime', label: '番剧管理', icon: 'VideoPlay'}
     ]
   }
   return baseNavItems
@@ -261,17 +264,22 @@ const pagination = ref({
 })
 
 //获取用视频信息
-const getUserVideoInfo = async () => {
-  let result = await getUserVideoService({
-    pageNum: pagination.value.pageNum,
-    pageSize: pagination.value.pageSize
-  });
-  videos.value = result.data.items;
-  pagination.value.total = result.data.total;
+const getUserVideos = async () => {
+  try {
+    let result = await getUserVideoService({
+      pageNum: pagination.value.pageNum,
+      pageSize: pagination.value.pageSize
+    });
+    videos.value = result.data.items;
+    pagination.value.total = result.data.total;
+  } catch (error) {
+    console.error('获取用户视频失败:', error);
+    ElMessage.error('获取视频列表失败');
+  }
 }
 
 // 获取用户视频信息
-getUserVideoInfo()
+getUserVideos()
 
 // 添加新的响应式变量
 const videoFileName = ref('')
