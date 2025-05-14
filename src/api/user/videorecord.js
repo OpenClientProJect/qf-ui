@@ -2,14 +2,16 @@ import request from "@/utils/request";
 
 /**
  * 添加视频播放记录
- * @returns {Promise} - 返回Promise对象
  */
-export const addVideoRecordService = (videoId) => {
-  // 确保videoId为数字类型，并包装为JSON格式数据
+export const addVideoRecordService = (videoId, categoryId) => {
+  // 确保videoId和categoryId为数字类型，并包装为JSON格式数据
   return request({
     url: "/video/record",
     method: "post",
-    data: { videoId: Number(videoId) }
+    data: { 
+      videoId: Number(videoId),
+      categoryId: Number(categoryId)
+    }
   });
 };
 

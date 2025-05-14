@@ -794,12 +794,14 @@ watch(isLogin, async (newVal) => {
 // 添加记录播放的方法
 const recordVideoPlay = async () => {
   try {
-    // 获取当前视频ID
+    // 获取当前视频ID和分类ID
     const videoId = route.params.id
+    const categoryId = videoInfo.value.categoryId
+    
     if (!videoId) return
     
-    // 调用API记录播放
-    await addVideoRecordService(videoId)
+    // 调用API记录播放，传入分类ID
+    await addVideoRecordService(videoId, categoryId)
     console.log('视频播放记录已添加')
   } catch (error) {
     console.error('添加播放记录失败:', error)
