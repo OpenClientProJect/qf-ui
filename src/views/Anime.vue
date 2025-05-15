@@ -199,16 +199,7 @@ const getHotAnimeList = async () => {
 }
 getHotAnimeList()
 
-// 新番时间表数据
-const weekdays = [
-  {id: 1, en: 'Mon', cn: '周一'},
-  {id: 2, en: 'Tue', cn: '周二'},
-  {id: 3, en: 'Wed', cn: '周三'},
-  {id: 4, en: 'Thu', cn: '周四'},
-  {id: 5, en: 'Fri', cn: '周五'},
-  {id: 6, en: 'Sat', cn: '周六'},
-  {id: 7, en: 'Sun', cn: '周日'}
-]
+
 const currentDay = ref(1) // 默认显示周一
 const allScheduleList = ref([])
 

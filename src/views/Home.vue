@@ -11,36 +11,7 @@ const router = useRouter()
 const videos = ref([])
 
 // 轮播图数据模型
-const carouselItems = ref([
-  {
-    id: 1,
-    title: '我推的孩子',
-    description: '16岁的天才少女星野爱久爱海梦想成为偶像，但在甄选会上却屡屡受挫...',
-    image: 'https://play.xfvod.pro/images/hb/wtdhz.png',
-    link: '/video/1'
-  },
-  {
-    id: 2,
-    title: '败犬女主太多了',
-    description: '这是一段视频介绍文字，简单描述视频的主要内容...',
-    image: 'https://play.xfvod.pro/images/hb/baiquan.jpg',
-    link: '/video/2'
-  },
-  {
-    id: 3,
-    title: '青之箱',
-    description: '这是另一段视频介绍文字，帮助用户了解视频内容...',
-    image: 'https://play.xfvod.pro/images/hb/lx.jpg',
-    link: '/video/3'
-  },
-  {
-    id: 4,
-    title: '缘结甘神家',
-    description: '这是另一段视频介绍文字，帮助用户了解视频内容...',
-    image: 'https://picgg.cycimg.me/banner/GXehBtTbYAALPbN-up2x.webp',
-    link: '/video/4'
-  }
-])
+const carouselItems = ref([])
 
 // 轮播图相关状态
 const currentIndex = ref(0)
@@ -66,19 +37,40 @@ const updateBannerHeight = () => {
 const getVideoList = async () => {
   const res = await getVideoListService()
   videos.value = res.data
+  
+  // 获取前四个视频数据作为轮播图数据
+  const carouselData = res.data.slice(0, 4).map(video => ({
+    id: video.id,
+    title: video.title,
+    description: video.content || '暂无描述',
+    image: video.cover,
+    link: video.isAnime ? `/anime/player/${video.id}` : `/video/${video.id}`,
+    isAnime: video.isAnime
+  }))
+  
+  carouselItems.value = carouselData
 }
 getVideoList()
 
 // 添加视频点击处函数
 const handleVideoClick = (video) => {
-  router.push({
-    path: `/video/${video.id}`,
-    // 可选:通过 query 传递一些基础数据,减少详情页的首次加载等待
-    query: {
-      title: video.title,
-      cover: video.cover
-    }
-  })
+  // 判断是否为番剧内容
+  if (video.isAnime) {
+    // 如果是番剧内容，跳转到番剧播放页
+    router.push({
+      path: `/anime/player/${video.id}`
+    })
+  } else {
+    // 如果是普通视频内容，跳转到视频详情页
+    router.push({
+      path: `/video/${video.id}`,
+      // 可选:通过 query 传递一些基础数据,减少详情页的首次加载等待
+      query: {
+        title: video.title,
+        cover: video.cover
+      }
+    })
+  }
 }
 
 // 添加刷新方法
@@ -200,6 +192,7 @@ onUnmounted(() => {
           <el-card v-for="video in videos" :key="video.id" class="video-card" @click="handleVideoClick(video)">
             <div class="video-thumbnail">
               <img :src="video.cover" :alt="video.title" class="cover-image">
+              <div v-if="video.isAnime" class="anime-tag">番剧</div>
             </div>
             <div class="video-title">{{ video.title }}</div>
             <div class="video-info">
@@ -494,6 +487,22 @@ onUnmounted(() => {
   overflow: hidden;
   border-radius: 4px;
   width: 100%;
+  position: relative;
+}
+
+/* 添加番剧标签样式 */
+.anime-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background-color: rgba(251, 114, 153, 0.9);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 :deep(.el-card__body) {
