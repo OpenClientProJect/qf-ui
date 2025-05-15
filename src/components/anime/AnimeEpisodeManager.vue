@@ -229,8 +229,9 @@
             type="primary" 
             @click="submitEpisodeForm" 
             :disabled="!episodeForm.videoUrl || uploading"
+            :loading="uploading"
           >
-            确定
+            {{ uploading ? '上传中...' : '确定' }}
           </el-button>
         </span>
       </template>
@@ -925,6 +926,7 @@ const handlePreviewClose = () => {
 
 .upload-progress {
   padding: 16px 0;
+  margin-top: 10px;
 }
 
 .progress-info {
