@@ -193,6 +193,17 @@ const getHotAnimeList = async () => {
     const res = await getAnimeListService(pageParams.value)
     // 直接使用返回的数据
     hotAnimeList.value = res.data.items;
+    
+    // 更新轮播图数据，使用热门番剧的前4条数据
+    if (hotAnimeList.value && hotAnimeList.value.length > 0) {
+      const topAnimes = hotAnimeList.value.slice(0, 4); // 获取前4条数据
+      bannerList.value = topAnimes.map(anime => ({
+        id: anime.animeId,
+        title: anime.title,
+        coverImage: anime.coverImage,
+        description: anime.description
+      }));
+    }
   } catch (error) {
     console.error('获取番剧列表失败:', error)
   }

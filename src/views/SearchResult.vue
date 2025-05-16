@@ -54,7 +54,7 @@
           <div v-for="item in searchResults"
                :key="item.id"
                class="video-item"
-               @click="router.push(`/video/${item.id}`)"
+               @click="handleItemClick(item)"
           >
             <div class="video-cover">
               <el-image
@@ -69,9 +69,11 @@
                   </div>
                 </template>
               </el-image>
+              <!-- 添加番剧标识 -->
+              <div v-if="item.isAnime" class="anime-badge">番剧</div>
             </div>
             <div class="video-info">
-              <h3 class="video-title">标题：{{ item.title }}</h3>
+              <h3 class="video-title">{{ item.title }}</h3>
               <div class="uploader-info">
                 <el-avatar
                     :size="24"
@@ -144,7 +146,7 @@ const searchHistory = ref([])
 
 // 搜索导航项
 const navItems = [
-  {name: '视频', type: 'video', count: 0},
+  {name: '视频/番剧', type: 'video', count: 0},
   {name: '用户', type: 'user', count: 0},
 ]
 
@@ -201,7 +203,8 @@ const fetchSearchResults = async () => {
         userPic: item.userPic,
         username: item.username,
         createTime: item.createTime,
-        updateTime: item.updateTime
+        updateTime: item.updateTime,
+        isAnime: item.isAnime
       }))
       total.value = res.data.video ? res.data.video.length : 0
     } else if (currentType.value === 'user') {
@@ -240,6 +243,17 @@ const handleSizeChange = (val) => {
 const handleCurrentChange = (val) => {
   currentPage.value = val
   fetchSearchResults()
+}
+
+// 处理点击视频或番剧项
+const handleItemClick = (item) => {
+  if (item.isAnime === true) {
+    // 如果是番剧，跳转到番剧播放页
+    router.push(`/anime/player/${item.id}`)
+  } else {
+    // 如果是普通视频，跳转到视频详情页
+    router.push(`/video/${item.id}`)
+  }
 }
 
 onMounted(() => {
@@ -362,6 +376,19 @@ onMounted(() => {
         color: #fff;
         font-size: 12px;
         border-radius: 4px;
+      }
+      
+      /* 添加番剧标识样式 */
+      .anime-badge {
+        position: absolute;
+        left: 8px;
+        top: 8px;
+        padding: 2px 8px;
+        background-color: #ff6b6b;
+        color: #fff;
+        font-size: 12px;
+        border-radius: 4px;
+        font-weight: 500;
       }
     }
 
